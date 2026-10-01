@@ -34,7 +34,15 @@ export function checkinPoints(streak: number) {
 export const SMELT_COST: Cost = { ore: 3, wood: 1 }
 export const SMELT_POINTS_PER_INGOT = 5
 
-export type NodeId = 'palm-grove' | 'driftwood' | 'rock-pile' | 'ore-vein'
+export type NodeId =
+  | 'palm-grove'
+  | 'driftwood'
+  | 'rock-pile'
+  | 'ore-vein'
+  | 'shipwreck'
+  | 'ironwood'
+  | 'highland-quarry'
+  | 'starfall-geode'
 
 export type ResourceNode = {
   id: NodeId
@@ -51,6 +59,10 @@ export const RESOURCE_NODES: ResourceNode[] = [
   { id: 'driftwood', name: 'Driftwood Pile', resource: 'wood', x: -4.2, z: -15.6, radius: 0.9, yield: [1, 3] },
   { id: 'rock-pile', name: 'Granite Outcrop', resource: 'stone', x: -4, z: -29, radius: 1.1, yield: [2, 4] },
   { id: 'ore-vein', name: 'Azure Ore Vein', resource: 'ore', x: 8.8, z: -28.6, radius: 1.1, yield: [1, 3] },
+  { id: 'shipwreck', name: 'Galleon Wreck', resource: 'wood', x: -3, z: 25, radius: 1.6, yield: [2, 4] },
+  { id: 'ironwood', name: 'Ironwood Thicket', resource: 'wood', x: 24, z: 11, radius: 1.2, yield: [3, 5] },
+  { id: 'highland-quarry', name: 'Highland Quarry', resource: 'stone', x: 31.5, z: -41, radius: 1.5, yield: [3, 5] },
+  { id: 'starfall-geode', name: 'Starfall Geode', resource: 'ore', x: 6.5, z: -50.5, radius: 1.3, yield: [2, 4] },
 ]
 
 export const NODE_BY_ID = Object.fromEntries(RESOURCE_NODES.map((n) => [n.id, n])) as Record<NodeId, ResourceNode>
