@@ -1,0 +1,198 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fredoka), var(--font-inter), ui-sans-serif, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-sand: var(--sand);
+  --color-sea: var(--sea);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: dark;
+  --background: #0d1524;
+  --foreground: #fff6ea;
+  --card: rgb(16 24 40 / 0.72);
+  --card-foreground: #fff6ea;
+  --popover: #121c2f;
+  --popover-foreground: #fff6ea;
+  --primary: #ffa447;
+  --primary-foreground: #2a1404;
+  --secondary: rgb(255 246 234 / 0.1);
+  --secondary-foreground: #fff6ea;
+  --muted: rgb(255 246 234 / 0.08);
+  --muted-foreground: #c9bba8;
+  --accent: #3cc6b8;
+  --accent-foreground: #04201d;
+  --destructive: #ff5d5d;
+  --border: rgb(255 246 234 / 0.14);
+  --input: rgb(255 246 234 / 0.16);
+  --ring: #ffa447;
+  --sand: #f3dcb8;
+  --sea: #3cc6b8;
+  --chart-1: #ffa447;
+  --chart-2: #3cc6b8;
+  --chart-3: #4f8cff;
+  --chart-4: #a46bff;
+  --chart-5: #ffb321;
+  --radius: 0.875rem;
+  --sidebar: #121c2f;
+  --sidebar-foreground: #fff6ea;
+  --sidebar-primary: #ffa447;
+  --sidebar-primary-foreground: #2a1404;
+  --sidebar-accent: rgb(255 246 234 / 0.1);
+  --sidebar-accent-foreground: #fff6ea;
+  --sidebar-border: rgb(255 246 234 / 0.14);
+  --sidebar-ring: #ffa447;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@utility glass {
+  background: linear-gradient(180deg, rgb(20 30 50 / 0.72), rgb(12 18 32 / 0.82));
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgb(255 246 234 / 0.14);
+  box-shadow: 0 10px 40px -12px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+@utility glass-light {
+  background: linear-gradient(180deg, rgb(255 248 236 / 0.9), rgb(246 228 200 / 0.88));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgb(255 255 255 / 0.6);
+  box-shadow: 0 8px 28px -10px rgb(60 30 10 / 0.45);
+  color: #3a2410;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes shadow-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.45; }
+  50% { transform: translateX(-50%) scale(0.82); opacity: 0.3; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes glint {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.92); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes ring-out {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.6); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+}
+
+@keyframes dig-shake {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  20% { transform: translateY(4px) rotate(-8deg); }
+  40% { transform: translateY(-2px) rotate(6deg); }
+  60% { transform: translateY(5px) rotate(-6deg); }
+  80% { transform: translateY(-1px) rotate(4deg); }
+}
+
+@keyframes sand-burst {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+}
+
+@keyframes rise-in {
+  0% { opacity: 0; transform: translateY(40px) scale(0.6) rotate(-8deg); }
+  60% { opacity: 1; transform: translateY(-8px) scale(1.06) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes rays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sun-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.08); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@utility animate-bob {
+  animation: bob 2.6s ease-in-out infinite;
+}
+@utility animate-dig {
+  animation: dig-shake 0.45s ease-in-out infinite;
+}
+@utility animate-rise-in {
+  animation: rise-in 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@utility animate-rays {
+  animation: rays 14s linear infinite;
+}
+@utility animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 2.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
