@@ -102,7 +102,7 @@ export function Player({
   const arrow = useRef<THREE.Group>(null)
   const motion = useRef<Motion>({ speed: 0, dig: 0 })
   const velocity = useRef({ x: 0, z: 0 })
-  const near = useRef<number | null>(null)
+  const near = useRef<string | null>(null)
   const timers = useRef({ dust: 0, sand: 0, step: 0 })
   const lookTarget = useRef(new THREE.Vector3(playerState.x, 1, playerState.z))
   const camera = useThree((s) => s.camera)

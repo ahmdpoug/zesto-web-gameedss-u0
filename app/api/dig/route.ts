@@ -17,7 +17,7 @@ import {
   type RarityId,
 } from '@/lib/zesto/config'
 import { DIG_MATERIALS, digBonusPercent } from '@/lib/zesto/economy'
-import { addPoints, ownedTools } from '@/lib/zesto/server'
+import { addPoints, ownedTools, trackProgress } from '@/lib/zesto/server'
 
 export const maxDuration = 60
 
@@ -149,6 +149,7 @@ export async function POST(request: Request) {
         .where(eq(players.wallet, wallet))
         .returning()
       await addPoints(tx, wallet, 'dig', reward.points, `Dug up a ${rarity.label} ${rarity.item}`)
+      await trackProgress(tx, wallet, { dig: 1 })
       return updated
     })
 

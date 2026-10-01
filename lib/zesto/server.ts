@@ -1,10 +1,23 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { and, desc, eq, gt } from 'drizzle-orm'
+import { and, desc, eq, gt, inArray, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { buildings, players, pointsLog, sessions, tools } from '@/lib/db/schema'
+import { buildings, players, pointsLog, progress, questClaims, sessions, tools } from '@/lib/db/schema'
 import type { CharacterId, RarityId } from './config'
 import {
+  ALL_TIME,
+  activeQuests,
+  dayKey,
+  nextDailyReset,
+  nextWeeklyReset,
+  weekKey,
+  type DerivedStat,
+  type Metric,
+  type QuestDef,
+  type QuestState,
+} from './quests'
+import {
   BUILDINGS,
+  BUILDING_BY_ID,
   ENERGY_REGEN_MS,
   PRODUCTION_CAP_HOURS,
   checkinPoints,
@@ -124,6 +137,67 @@ export async function addPoints(tx: Executor, wallet: string, source: PointSourc
   await tx.insert(pointsLog).values({ wallet, source, points, detail })
 }
 
+export async function trackProgress(tx: Executor, wallet: string, increments: Partial<Record<Metric, number>>, now = new Date()) {
+  const periods = [dayKey(now), weekKey(now), ALL_TIME]
+  const rows = (Object.entries(increments) as [Metric, number][])
+    .filter(([, amount]) => amount > 0)
+    .flatMap(([metric, amount]) => periods.map((period) => ({ wallet, metric, period, amount })))
+  if (rows.length === 0) return
+  await tx
+    .insert(progress)
+    .values(rows)
+    .onConflictDoUpdate({
+      target: [progress.wallet, progress.metric, progress.period],
+      set: { amount: sql`${progress.amount} + excluded.amount` },
+    })
+}
+
+export async function computeQuests(
+  executor: Executor,
+  wallet: string,
+  player: PlayerRow,
+  buildingRows: { kind: string; level: number }[],
+  owned: ToolId[],
+  now: Date,
+): Promise<QuestState[]> {
+  const active = activeQuests(now)
+  const periods = [active.daily.period, active.weekly.period, ALL_TIME]
+  const [progressRows, claimRows] = await Promise.all([
+    executor.select().from(progress).where(and(eq(progress.wallet, wallet), inArray(progress.period, periods))),
+    executor
+      .select({ questId: questClaims.questId, period: questClaims.period })
+      .from(questClaims)
+      .where(and(eq(questClaims.wallet, wallet), inArray(questClaims.period, periods))),
+  ])
+
+  const validBuildings = buildingRows.filter((b) => b.kind in BUILDING_BY_ID)
+  const today = utcDay(now)
+  const yesterday = utcDay(new Date(now.getTime() - 86_400_000))
+  const derived: Record<DerivedStat, number> = {
+    buildings: validBuildings.length,
+    building_levels: validBuildings.reduce((sum, b) => sum + b.level, 0),
+    tools: owned.length,
+    streak: player.lastCheckin === today || player.lastCheckin === yesterday ? player.streak : 0,
+    digs: player.totalDigs,
+    legendary: player.bestRarity === 'legendary' ? 1 : 0,
+    points: player.totalPoints,
+  }
+
+  const value = (stat: QuestDef['stat'], period: string) =>
+    stat in derived
+      ? derived[stat as DerivedStat]
+      : (progressRows.find((r) => r.metric === stat && r.period === period)?.amount ?? 0)
+
+  return [active.daily, active.weekly, active.achievements].flatMap(({ period, quests }) =>
+    quests.map(({ stat, ...def }) => ({
+      ...def,
+      period,
+      progress: Math.min(def.goal, value(stat, period)),
+      claimed: claimRows.some((c) => c.questId === def.id && c.period === period),
+    })),
+  )
+}
+
 export async function loadState(wallet: string, executor: Executor = db): Promise<GameState> {
   const now = new Date()
   const [[player], buildingRows, toolRows, log] = await Promise.all([
@@ -138,11 +212,14 @@ export async function loadState(wallet: string, executor: Executor = db): Promis
       .limit(20),
   ])
 
+  const questResets = { daily: nextDailyReset(now), weekly: nextWeeklyReset(now) }
+
   if (!player) {
-    return { player: null, buildings: {}, tools: [], digBonusPercent: 0, log: [], serverTime: now.toISOString() }
+    return { player: null, buildings: {}, tools: [], digBonusPercent: 0, log: [], quests: [], questResets, serverTime: now.toISOString() }
   }
 
   const owned = ownedTools(toolRows)
+  const quests = await computeQuests(executor, wallet, player, buildingRows, owned, now)
   const max = maxEnergy(owned)
   const { energy, energyAt } = computeEnergy(player, max, now)
   const today = utcDay(now)
@@ -182,6 +259,8 @@ export async function loadState(wallet: string, executor: Executor = db): Promis
     tools: owned,
     digBonusPercent: digBonusPercent(buildingMap.beacon?.level ?? 0, owned),
     log: log.map((l) => ({ ...l, source: l.source as PointSource, createdAt: l.createdAt.toISOString() })),
+    quests,
+    questResets,
     serverTime: now.toISOString(),
   }
 }

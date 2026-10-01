@@ -1,6 +1,6 @@
 'use client'
 
-import { Axe, BookOpen, Coins, Gift, Hammer, LoaderCircle, Lock, MapPin, Pickaxe, Shovel, Sparkles, Trophy, User, Warehouse, Anvil, Compass } from 'lucide-react'
+import { Axe, BookOpen, Coins, Gift, Hammer, LoaderCircle, Lock, MapPin, Pickaxe, ScrollText, Shovel, Sparkles, Trophy, User, Warehouse, Anvil, Compass } from 'lucide-react'
 import type { DigStage } from '@/hooks/use-zesto'
 import { BUY_URL, CHARACTER_BY_ID, DIG_COST, getLevel, type CharacterId } from '@/lib/zesto/config'
 import { BUILDING_BY_ID, GATHER_ENERGY, RESOURCE_META, type BuildingDef, type ResourceNode } from '@/lib/zesto/economy'
@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import { CharacterAvatar } from './character-avatar'
 import { Joystick } from './joystick'
 
-export type PanelId = 'leaderboard' | 'profile' | 'base' | 'workshop' | 'rewards' | 'guide'
+export type PanelId = 'leaderboard' | 'profile' | 'base' | 'workshop' | 'rewards' | 'guide' | 'quests'
 
 export type Interaction =
   | { kind: 'dig' }
@@ -30,6 +30,7 @@ export function DigBar({
   interaction,
   energy,
   rewardsReady,
+  questsReady,
   onAction,
   onOpenPanel,
 }: {
@@ -41,6 +42,7 @@ export function DigBar({
   interaction: Interaction | null
   energy: number
   rewardsReady: boolean
+  questsReady: boolean
   onAction: () => void
   onOpenPanel: (panel: PanelId) => void
 }) {
@@ -57,6 +59,7 @@ export function DigBar({
       >
         <RailButton icon={<Warehouse className="size-[18px]" />} label="Base" onClick={() => onOpenPanel('base')} />
         <RailButton icon={<Anvil className="size-[18px]" />} label="Craft" onClick={() => onOpenPanel('workshop')} />
+        <RailButton icon={<ScrollText className="size-[18px]" />} label="Quests" onClick={() => onOpenPanel('quests')} badge={questsReady} />
         <RailButton icon={<Gift className="size-[18px]" />} label="Rewards" onClick={() => onOpenPanel('rewards')} badge={rewardsReady} />
         <RailButton icon={<Trophy className="size-[18px]" />} label="Ranks" onClick={() => onOpenPanel('leaderboard')} />
         <RailButton icon={<User className="size-[18px]" />} label="Profile" onClick={() => onOpenPanel('profile')} />

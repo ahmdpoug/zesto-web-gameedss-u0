@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto'
 import { and, eq, sql } from 'drizzle-orm'
-import { buildings, players, tools } from '@/lib/db/schema'
+import { buildings, players, questClaims, tools } from '@/lib/db/schema'
 import { db } from '@/lib/db'
 import {
   BUILDINGS,
@@ -32,11 +32,13 @@ import {
   addPoints,
   computeEnergy,
   computePending,
+  computeQuests,
   errorResponse,
   loadState,
   ownedTools,
   requireWallet,
   resourcesOf,
+  trackProgress,
   utcDay,
   type Executor,
   type PlayerRow,
@@ -64,6 +66,9 @@ function parseAction(body: unknown): GameAction {
     case 'collect':
     case 'checkin':
       return { type: a.type }
+    case 'claim_quest':
+      if (typeof a.id !== 'string' || a.id.length > 64) throw new GameError('Unknown quest')
+      return { type: 'claim_quest', id: a.id }
     default:
       throw new GameError('Unknown action')
   }
@@ -128,6 +133,7 @@ async function perform(tx: Executor, wallet: string, action: GameAction): Promis
         energyAt: energy >= max ? now : energyAt,
       })
       await addPoints(tx, wallet, 'gather', GATHER_POINTS, `Gathered ${amount} ${RESOURCE_META[node.resource].label.toLowerCase()} at ${node.name}`)
+      await trackProgress(tx, wallet, { gather: amount, [`gather_${node.resource}`]: amount }, now)
       return { title: `+${amount} ${RESOURCE_META[node.resource].label}`, description: node.name, points: GATHER_POINTS, gained }
     }
 
@@ -141,6 +147,7 @@ async function perform(tx: Executor, wallet: string, action: GameAction): Promis
       await tx.insert(buildings).values({ wallet, kind: action.kind, level: 1, builtAt: now, collectedAt: now })
       await savePlayer(tx, player, applyDelta(resources, negate(cost)), points)
       await addPoints(tx, wallet, 'build', points, `Constructed the ${def.name}`)
+      await trackProgress(tx, wallet, { build: 1 }, now)
       return { title: `${def.name} constructed`, description: def.effects[0], points }
     }
 
@@ -163,6 +170,7 @@ async function perform(tx: Executor, wallet: string, action: GameAction): Promis
       await savePlayer(tx, player, applyDelta(applyDelta(resources, pendingResources), negate(cost)), points)
       await addPoints(tx, wallet, 'upgrade', buildingPoints(action.kind, nextLevel), `Upgraded the ${def.name} to level ${nextLevel}`)
       if (pendingPoints > 0) await addPoints(tx, wallet, 'collect', pendingPoints, `${def.name} payout`)
+      await trackProgress(tx, wallet, { build: 1 }, now)
       return { title: `${def.name} → Level ${nextLevel}`, description: def.effects[nextLevel - 1], points }
     }
 
@@ -175,6 +183,7 @@ async function perform(tx: Executor, wallet: string, action: GameAction): Promis
       const points = ingots * SMELT_POINTS_PER_INGOT
       await savePlayer(tx, player, applyDelta(applyDelta(resources, negate(cost)), { ingots }), points)
       await addPoints(tx, wallet, 'smelt', points, `Smelted ${ingots} ingot${ingots === 1 ? '' : 's'}`)
+      await trackProgress(tx, wallet, { smelt: ingots }, now)
       return { title: `+${ingots} Ingot${ingots === 1 ? '' : 's'}`, description: 'Fresh from the Forge', points, gained: { ingots } }
     }
 
@@ -188,6 +197,7 @@ async function perform(tx: Executor, wallet: string, action: GameAction): Promis
       await tx.insert(tools).values({ wallet, tool: tool.id })
       await savePlayer(tx, player, applyDelta(resources, negate(tool.cost)), tool.points)
       await addPoints(tx, wallet, 'craft', tool.points, `Forged the ${tool.name}`)
+      await trackProgress(tx, wallet, { craft: 1 }, now)
       return { title: `${tool.name} crafted`, description: tool.effect, points: tool.points }
     }
 
@@ -213,6 +223,7 @@ async function perform(tx: Executor, wallet: string, action: GameAction): Promis
       if (points === 0 && Object.keys(gained).length === 0) throw new GameError('Nothing to collect yet — check back soon')
       await savePlayer(tx, player, next, points)
       await addPoints(tx, wallet, 'collect', points, 'Collected homestead production')
+      await trackProgress(tx, wallet, { collect: 1 }, now)
       return { title: 'Production collected', description: 'Your homestead has been busy', points, gained }
     }
 
@@ -232,7 +243,28 @@ async function perform(tx: Executor, wallet: string, action: GameAction): Promis
         energyAt: refilled >= max ? now : energyAt,
       })
       await addPoints(tx, wallet, 'checkin', points, `Day ${streak} check-in`)
+      await trackProgress(tx, wallet, { checkin: 1 }, now)
       return { title: `Day ${streak} check-in`, description: `+${CHECKIN_ENERGY} energy restored`, points }
+    }
+
+    case 'claim_quest': {
+      const quests = await computeQuests(tx, wallet, player, buildingRows, owned, now)
+      const quest = quests.find((q) => q.id === action.id)
+      if (!quest) throw new GameError('That quest is no longer active')
+      if (quest.claimed) throw new GameError('Reward already claimed')
+      if (quest.progress < quest.goal) throw new GameError(`Keep going — ${quest.progress}/${quest.goal}`)
+      const inserted = await tx
+        .insert(questClaims)
+        .values({ wallet, questId: quest.id, period: quest.period })
+        .onConflictDoNothing()
+        .returning({ questId: questClaims.questId })
+      if (inserted.length === 0) throw new GameError('Reward already claimed')
+      const gained = { ...(quest.reward.resources ?? {}) } as Partial<Resources>
+      const { points } = quest.reward
+      await savePlayer(tx, player, applyDelta(resources, gained), points)
+      const label = quest.scope === 'achievement' ? 'Achievement' : `${quest.scope === 'daily' ? 'Daily' : 'Weekly'} quest`
+      await addPoints(tx, wallet, 'quest', points, `${label}: ${quest.title}`)
+      return { title: `${label} complete`, description: quest.title, points, gained }
     }
   }
 }

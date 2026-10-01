@@ -60,6 +60,28 @@ export const pointsLog = pgTable('zesto_points_log', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const progress = pgTable(
+  'zesto_progress',
+  {
+    wallet: text('wallet').notNull(),
+    metric: text('metric').notNull(),
+    period: text('period').notNull(),
+    amount: integer('amount').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.wallet, t.metric, t.period] })],
+)
+
+export const questClaims = pgTable(
+  'zesto_quest_claims',
+  {
+    wallet: text('wallet').notNull(),
+    questId: text('quest_id').notNull(),
+    period: text('period').notNull(),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.wallet, t.questId, t.period] })],
+)
+
 export const sessions = pgTable('zesto_sessions', {
   tokenHash: text('token_hash').primaryKey(),
   wallet: text('wallet').notNull(),

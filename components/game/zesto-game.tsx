@@ -18,6 +18,7 @@ import { BasePanel, BuildingPanel, WorkshopPanel } from './homestead-panels'
 import { LeaderboardPanel } from './leaderboard-panel'
 import { Onboarding } from './onboarding'
 import { ProfilePanel } from './profile-panel'
+import { QuestsPanel, claimableCount } from './quests-panel'
 import { RewardReveal } from './reward-reveal'
 import { RewardsPanel } from './rewards-panel'
 import { TopHud } from './top-hud'
@@ -254,6 +255,7 @@ export function ZestoGame() {
             interaction={interaction}
             energy={player.energy}
             rewardsReady={!player.checkedInToday}
+            questsReady={claimableCount(game?.quests ?? []) > 0}
             onAction={handleAction}
             onOpenPanel={setPanel}
           />
@@ -290,6 +292,7 @@ export function ZestoGame() {
           {panel === 'base' ? <BasePanel state={game} run={run} pending={pending} onClose={closePanel} /> : null}
           {panel === 'workshop' ? <WorkshopPanel state={game} run={run} pending={pending} onClose={closePanel} /> : null}
           {panel === 'rewards' ? <RewardsPanel state={game} run={run} pending={pending} onClose={closePanel} /> : null}
+          {panel === 'quests' ? <QuestsPanel state={game} run={run} pending={pending} onClose={closePanel} /> : null}
           {buildingPanel ? <BuildingPanel kind={buildingPanel} state={game} run={run} pending={pending} onClose={closeBuilding} /> : null}
         </>
       ) : null}

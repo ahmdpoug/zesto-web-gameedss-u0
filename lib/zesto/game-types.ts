@@ -1,5 +1,6 @@
 import type { CharacterId, RarityId } from './config'
 import type { BuildingKind, NodeId, PointSource, Production, Resources, ToolId } from './economy'
+import type { QuestState } from './quests'
 
 export type BuildingState = { level: number; pending: Production; collectedAt: string }
 
@@ -25,6 +26,8 @@ export type GameState = {
   tools: ToolId[]
   digBonusPercent: number
   log: { id: number; source: PointSource; points: number; detail: string; createdAt: string }[]
+  quests: QuestState[]
+  questResets: { daily: string; weekly: string }
   serverTime: string
 }
 
@@ -36,6 +39,7 @@ export type GameAction =
   | { type: 'craft'; tool: ToolId }
   | { type: 'collect' }
   | { type: 'checkin' }
+  | { type: 'claim_quest'; id: string }
 
 export type ActionOutcome = {
   title: string

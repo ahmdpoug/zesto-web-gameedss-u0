@@ -234,12 +234,13 @@ export function canAfford(resources: Resources, cost: Cost) {
   return (Object.entries(cost) as [ResourceId, number][]).every(([k, v]) => resources[k] >= v)
 }
 
-export type PointSource = 'signup' | 'dig' | 'gather' | 'build' | 'upgrade' | 'smelt' | 'craft' | 'collect' | 'checkin'
+export type PointSource = 'signup' | 'dig' | 'gather' | 'build' | 'upgrade' | 'smelt' | 'craft' | 'collect' | 'checkin' | 'quest'
 
 export const POINT_SOURCES: { source: PointSource; label: string; value: string }[] = [
   { source: 'signup', label: 'Create your account', value: `+${SIGNUP_BONUS}` },
   { source: 'checkin', label: 'Daily check-in (7-day streak)', value: `+${CHECKIN_BASE} → +${checkinPoints(CHECKIN_MAX_STREAK)}` },
   { source: 'gather', label: 'Gather wood, stone or ore', value: `+${GATHER_POINTS} each` },
+  { source: 'quest', label: 'Complete quests & achievements', value: '+15 → +1,500' },
   { source: 'smelt', label: 'Smelt ingots at the Forge', value: `+${SMELT_POINTS_PER_INGOT} / ingot` },
   { source: 'build', label: 'Construct a building', value: '+100 → +500' },
   { source: 'upgrade', label: 'Upgrade a building', value: '×2 → ×4' },
